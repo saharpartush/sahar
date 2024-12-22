@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Management</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="script.js" defer></script>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2rem;
+        }
+
+        main {
+            padding: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            border-bottom: 1px solid #e0e0e0;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .status-pending {
+            background-color: #fff8e1;
+        }
+
+        .status-not_started {
+            background-color: #ffebee;
+        }
+
+        .status-completed {
+            background-color: #e8f5e9;
+        }
+
+        .status-urgent {
+            background-color: #ffebee;
+        }
+
+        #edit-section {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            border-radius: 8px;
+        }
+
+        #edit-section form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #edit-section label {
+            margin-top: 0.5rem;
+        }
+
+        #edit-section button {
+            margin-top: 1rem;
+            padding: 0.5rem;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #edit-section button:hover {
+            background-color: #45a049;
+        }
+
+        #dashboard {
+            margin-top: 2rem;
+        }
+
+        #status-distribution {
+            display: flex;
+            justify-content: space-around;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .status-count {
+            padding: 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-size: 1.2rem;
+            text-align: center;
+            flex: 1 1 calc(25% - 1rem);
+            min-width: 200px;
+        }
+
+        .status-pending {
+            background-color: #ffc107;
+        }
+
+        .status-not_started {
+            background-color: #f44336;
+        }
+
+        .status-completed {
+            background-color: #4CAF50;
+        }
+
+        .status-urgent {
+            background-color: #d32f2f;
+        }
+
+        button {
+            padding: 0.7rem 1.5rem;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Team Task Management</h1>
+    </header>
+    <main>
+        <section id="task-list">
+            <h2>Task List</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th onclick="sortTable('project')">Project</th>
+                        <th onclick="sortTable('task')">Task</th>
+                        <th onclick="sortTable('responsible')">Responsible</th>
+                        <th onclick="sortTable('date')">Due Date</th>
+                        <th onclick="sortTable('status')">Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="task-table-body">
+                    <!-- Tasks will be dynamically populated here -->
+                </tbody>
+            </table>
+            <button onclick="showAddTaskForm()">Add Task</button>
+        </section>
+
+        <section id="dashboard">
+            <h2>Task Dashboard</h2>
+            <div id="status-distribution">
+                <div class="status-count status-pending">Pending: <span id="count-pending">0</span></div>
+                <div class="status-count status-not_started">Not Started: <span id="count-not-started">0</span></div>
+                <div class="status-count status-completed">Completed: <span id="count-completed">0</span></div>
+                <div class="status-count status-urgent">Urgent: <span id="count-urgent">0</span></div>
+            </div>
+        </section>
+    </main>
+
+    <aside id="edit-section">
+        <form id="edit-task-form" onsubmit="saveTask(event)">
+            <h2>Edit Task</h2>
+            <label for="edit-project">Project:</label>
+            <select id="edit-project">
+                <!-- Options dynamically populated -->
+            </select>
+            
+            <label for="edit-task-name">Task Name:</label>
+            <input type="text" id="edit-task-name" required>
+
+            <label for="edit-responsible">Responsible:</label>
+            <select id="edit-responsible">
+                <!-- Options dynamically populated -->
+            </select>
+
+            <label for="edit-date">Due Date:</label>
+            <input type="date" id="edit-date" required>
+
+            <label for="edit-status">Status:</label>
+            <select id="edit-status">
+                <option value="pending">Pending</option>
+                <option value="not_started">Not Started</option>
+                <option value="completed">Completed</option>
+                <option value="urgent">Urgent</option>
+            </select>
+
+            <button type="submit">Save Changes</button>
+            <button type="button" onclick="hideEditTaskForm()">Cancel</button>
+        </form>
+    </aside>
+
+    <script>
+        let tasks = [];
+
+        function sortTable(column) {
+            tasks.sort((a, b) => a[column].localeCompare(b[column]));
+            renderTaskTable();
+        }
+
+        function showAddTaskForm() {
+            // Logic to show task form
+        }
+
+        function hideEditTaskForm() {
+            document.getElementById('edit-section').style.display = 'none';
+        }
+
+        function saveTask(event) {
+            event.preventDefault();
+            // Logic to save task
+        }
+
+        function renderTaskTable() {
+            const tbody = document.getElementById('task-table-body');
+            tbody.innerHTML = '';
+            tasks.forEach(task => {
+                const row = document.createElement('tr');
+                row.classList.add(`status-${task.status}`);
+                row.innerHTML = `
+                    <td>${task.project}</td>
+                    <td>${task.task}</td>
+                    <td>${task.responsible}</td>
+                    <td>${task.date}</td>
+                    <td>${task.status}</td>
+                    <td>
+                        <button onclick="editTask(${task.id})">Edit</button>
+                        <button onclick="deleteTask(${task.id})">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function editTask(id) {
+            // Logic to edit task
+        }
+
+        function deleteTask(id) {
+            tasks = tasks.filter(task => task.id !== id);
+            renderTaskTable();
+        }
+
+        // Initialize with sample data
+        tasks = [
+            { id: 1, project: 'Project A', task: 'Task 1', responsible: 'John', date: '2024-12-31', status: 'pending' },
+            { id: 2, project: 'Project B', task: 'Task 2', responsible: 'Doe', date: '2024-12-25', status: 'completed' }
+        ];
+
+        renderTaskTable();
+    </script>
+</body>
+</html>
